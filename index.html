@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ClearPDF</title>
+<script src="lib/pdf-lib.min.js"></script><script src="lib/pdf.min.js"></script><script src="lib/jszip.min.js"></script>
+<style>
+:root{--b1:#e9f0ff;--b2:#fdeef7;--g:rgba(255,255,255,.5);--gb:rgba(255,255,255,.8);--sh:rgba(40,60,120,.14);--tx:#14161c;--sub:#5d6575;--ac:#2f8cff;--gr:#34a96a;--rd:#ef5350;--sheet:rgba(238,243,255,.85)}
+.dark{--b1:#0d1120;--b2:#1b1032;--g:rgba(34,38,60,.5);--gb:rgba(255,255,255,.13);--sh:rgba(0,0,0,.35);--tx:#eef0f6;--sub:#9aa1b2;--sheet:rgba(14,17,32,.86)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font:15px system-ui,-apple-system,sans-serif;color:var(--tx);background:linear-gradient(160deg,var(--b1),var(--b2)) fixed;overflow:hidden}
+body:before,body:after{content:"";position:fixed;width:60vmax;height:60vmax;border-radius:50%;filter:blur(70px);opacity:.55;z-index:-1}
+body:before{background:#79b6ff;top:-22vmax;left:-22vmax}body:after{background:#ff9ccd;bottom:-22vmax;right:-22vmax}
+.dark body:before,.dark body:after{opacity:.3}
+[hidden]{display:none!important}
+.glass{background:var(--g);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid var(--gb);box-shadow:0 8px 30px var(--sh);border-radius:28px}
+#app{height:100%;display:flex;flex-direction:column;max-width:600px;margin:auto}
+header{display:flex;justify-content:center;position:relative;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 8px}
+#ttl{padding:12px 28px;border-radius:999px;font:600 17px Fredoka,system-ui,sans-serif}
+#sbtn{position:absolute;right:16px;top:calc(env(safe-area-inset-top,0px) + 14px);width:46px;height:46px;border-radius:50%;font-size:18px}
+#sw{padding:0 16px 6px}#sw input{width:100%}
+#main{flex:1;overflow:auto;padding:8px 16px 120px;display:flex;flex-direction:column;gap:14px}
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);width:min(560px,calc(100% - 28px));display:flex;padding:7px;border-radius:999px;z-index:5}
+nav button{flex:1;border:0;background:none;border-radius:999px;padding:12px;font-size:20px;color:var(--tx)}
+nav button.on{background:rgba(47,140,255,.2)}
+button{font:inherit;color:inherit;cursor:pointer}
+.ic{width:38px;height:38px;border-radius:50%;border:1px solid var(--gb);background:var(--g);font-size:16px}
+.ic.red{background:#f0645f;color:#fff;border:0}
+.btn{border:0;border-radius:999px;padding:15px 18px;font-weight:600;color:#fff;background:var(--ac);flex:1;box-shadow:0 6px 18px rgba(47,140,255,.35)}
+.btn.g{background:var(--gr);box-shadow:0 6px 18px rgba(52,169,106,.35)}
+.btn.o{background:var(--g);color:var(--tx);border:1px solid var(--gb);box-shadow:none}
+.row{display:flex;gap:12px}
+.hero{padding:24px 18px;text-align:center}
+.logo{width:60px;height:60px;border-radius:20px;background:rgba(47,140,255,.18);display:grid;place-items:center;font-size:28px;margin:0 auto 10px}
+.chip{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(47,140,255,.15);color:var(--ac);font-weight:600;font-size:12px;letter-spacing:.06em}
+h1{font:600 26px Fredoka,system-ui,sans-serif;margin:12px 0 4px}
+p.sub,.hero p{color:var(--sub);margin:4px 0 16px}
+.rc{padding:16px}.rh{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:20px}.rh i{flex:1}
+.item{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--gb);background:var(--g);border-radius:20px;padding:10px;margin-top:8px}
+.fi{width:44px;height:44px;border-radius:14px;background:rgba(239,83,80,.18);color:var(--rd);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.fi.xls,.fi.csv{background:rgba(52,169,106,.18);color:var(--gr)}.fi.txt,.fi.json,.fi.md{background:rgba(120,130,150,.2);color:var(--sub)}.fi.jpg,.fi.png,.fi.jpeg,.fi.webp{background:rgba(47,140,255,.18);color:var(--ac)}
+.nm{min-width:0;flex:1;display:flex;flex-direction:column}.nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}small,.empty{color:var(--sub)}
+.empty{text-align:center;padding:16px}
+.sec{font-weight:700;margin:6px 6px -6px;letter-spacing:.04em}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+.card{border:0;border-radius:22px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:130px}
+.card span{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:22px;background:rgba(255,255,255,.5);margin-bottom:auto}
+.card b{font-size:17px;margin-top:10px}.card small{font-size:13px}
+.open{display:flex;gap:14px;align-items:center;text-align:left;border:0;border-radius:26px;padding:14px;background:rgba(47,140,255,.2);width:100%}
+#ov{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:var(--sheet);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);max-width:600px;margin:auto}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px}
+.bar b{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar span{width:38px}
+.sb{flex:1;overflow:auto;padding:6px 14px calc(env(safe-area-inset-bottom,0px) + 24px);display:flex;flex-direction:column;gap:12px}
+.pad{padding:16px;display:flex;flex-direction:column;gap:10px}
+label{font-weight:600;font-size:13px;color:var(--sub)}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--g);border:1px solid var(--gb);border-radius:16px;padding:12px;width:100%}
+input[type=checkbox]{width:auto}
+.seg{display:flex;gap:6px}.seg button{flex:1;border:1px solid var(--gb);background:var(--g);border-radius:999px;padding:10px}.seg button.on{background:var(--ac);color:#fff;border:0}
+.pages{display:flex;flex-direction:column;gap:10px}.pg{width:100%;aspect-ratio:1/1.414;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px var(--sh)}.pg canvas{width:100%;display:block}
+.zb{display:flex;gap:10px;align-items:center;justify-content:center;position:sticky;left:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.tc{padding:8px;border-radius:20px;text-align:center}.tw{aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;overflow:hidden}.tw canvas{max-width:100%;max-height:100%;transition:transform .2s}
+.tb{display:flex;gap:2px;justify-content:center}.tb button{border:0;background:none;padding:6px;font-size:15px}
+.li{display:flex;gap:10px;align-items:center;padding:8px;border-radius:20px;margin-bottom:8px}.li img{width:44px;height:44px;object-fit:cover;border-radius:10px}.li button{border:0;background:none;padding:6px;font-size:16px}
+.full{max-width:100%;border-radius:12px}.txt{white-space:pre-wrap;word-break:break-word;font:13px ui-monospace,monospace}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:40;padding:12px 20px;border-radius:999px;transition:.25s;max-width:90%;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#busy{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-weight:600}
+</style></head><body>
+<div id="app"><header><div id="ttl" class="glass">ClearPDF</div><button id="sbtn" class="glass">🔍</button></header>
+<div id="sw" hidden><input id="q" placeholder="Search…"></div><div id="main"></div></div>
+<nav class="glass"><button data-t="home" class="on">🏠</button><button data-t="tools">🧰</button><button data-t="set">⚙️</button></nav>
+<div id="ov"></div><div id="toast" class="glass"></div><div id="busy"></div>
+<script>
+const {PDFDocument,StandardFonts,rgb,degrees}=PDFLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc='lib/pdf.worker.min.js';
+const $=s=>document.querySelector(s);
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ext=n=>(n.split('.').pop()||'').toLowerCase(), base=f=>f.name.replace(/\.[^.]+$/,'');
+const stamp=()=>new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+const buf=f=>f.arrayBuffer();
+let S={tab:'home',q:'',sort:0,set:ld('set',{theme:'auto',fmt:'png',scale:2})}, rec=ld('rec',[]);
+const theme=()=>document.documentElement.classList.toggle('dark',S.set.theme=='dark'||(S.set.theme=='auto'&&matchMedia('(prefers-color-scheme:dark)').matches));
+
+// ---- IndexedDB: recent files ka asol file ekhane rakha hoy (jate abar kholte pare)
+const dbp=new Promise(r=>{try{const q=indexedDB.open('clearpdf',1);q.onupgradeneeded=()=>q.result.createObjectStore('f');q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch{r(null)}});
+const idb=async(op,k,v)=>{try{const d=await dbp;if(!d)return;return await new Promise(r=>{const s=d.transaction('f','readwrite').objectStore('f');const q=op=='get'?s.get(k):op=='put'?s.put(v,k):op=='del'?s.delete(k):s.clear();q.onsuccess=()=>r(q.result);q.onerror=()=>r()})}catch{}};
+const addRec=async(f,info)=>{const id=Date.now()+Math.random().toString(36).slice(2,5);rec.unshift({id,name:f.name,t:Date.now(),info,ext:ext(f.name)});rec.splice(20).forEach(o=>idb('del',o.id));sv('rec',rec);await idb('put',id,f)};
+const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?'Just now':m<60?m+' min ago':m<1440?(m/60|0)+' h ago':(m/1440|0)+' d ago'};
+
+// ---- helpers: file pick, download, toast, busy
+const pick=(accept,multi,cam)=>new Promise(r=>{const i=document.createElement('input');i.type='file';i.accept=accept;i.multiple=!!multi;if(cam)i.capture='environment';i.onchange=()=>r([...i.files]);i.click()});
+const CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
+const b64=bl=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(bl)});
+// Android app e <a download> kaj kore na, tai file cache e likhe Share sheet dekhai (Save/Drive/WhatsApp)
+const dl=async(d,name,type)=>{const bl=d instanceof Blob?d:new Blob([d],{type});
+ if(NATIVE){try{const{Filesystem,Share}=CAP.Plugins,r=await Filesystem.writeFile({path:name,data:await b64(bl),directory:'CACHE'});await Share.share({title:name,url:r.uri,dialogTitle:'Save or share'});return}catch(e){if(/cancel/i.test(e.message||''))return;toast('Save failed: '+(e.message||e))}}
+ const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),9e3)};
+const zip=async(fs,name)=>{const z=new JSZip();fs.forEach(([n,d])=>z.file(n,d));dl(await z.generateAsync({type:'blob'}),name,'application/zip')};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2800)};
+const busy=m=>{const b=$('#busy');b.style.display=m?'flex':'none';b.textContent=m||''};
+const go=async(m,fn)=>{busy(m||'Working…');try{await fn()}catch(e){console.error(e);toast(e.message||'Something went wrong')}busy(0)};
+const out=async(bytes,name)=>{dl(bytes,name,'application/pdf');try{const f=new File([bytes],name,{type:'application/pdf'});const d=await pdfjsLib.getDocument({data:bytes.slice()}).promise;await addRec(f,d.numPages+' pages')}catch{}toast('Saved '+name);render()};
+const sheet=(title,build)=>{const o=$('#ov');o.innerHTML=`<div class="bar"><button class="ic" id="bk">‹</button><b>${esc(title)}</b><span></span></div><div class="sb"></div>`;o.style.display='flex';$('#bk').onclick=close;build($('.sb'))};
+const close=()=>{$('#ov').style.display='none';$('#ov').innerHTML='';busy(0)};
+const ranges=(s,n)=>s.split(',').map(p=>p.trim()).filter(Boolean).map(p=>{const[a,b]=p.split('-').map(x=>parseInt(x));const e=b||a;if(!(a>=1&&e<=n&&a<=e))throw Error(`Invalid range "${p}" (pages 1-${n})`);return Array.from({length:e-a+1},(_,i)=>a-1+i)});
+const pdfjsDoc=async f=>pdfjsLib.getDocument({data:await buf(f)}).promise;
+const thumb=async(doc,i,w)=>{const p=await doc.getPage(i),s=w/p.getViewport({scale:1}).width,vp=p.getViewport({scale:s}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await p.render({canvasContext:c.getContext('2d'),viewport:vp,background:'#fff'}).promise;return c};
+const toCanvas=async(f,max=4096)=>{const bm=await createImageBitmap(f),k=Math.min(1,max/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';x.drawImage(bm,0,0,c.width,c.height);return c};
+// ---- Text clear korar filter: sh=shadow/background remove, g=gray, st=contrast stretch, th=B&W, sp=sharpen
+const FL={none:['Original',{}],auto:['Auto enhance',{st:1}],magic:['Magic color',{sh:1,st:1}],crisp:['Crisp text',{sh:1,st:1,sp:1}],gray:['Grayscale',{sh:1,g:1,st:1}],bw:['Black & white',{sh:1,g:1,th:1}],sharp:['Sharpen',{sp:1}]};
+const flOpts=sel=>Object.entries(FL).map(([k,v])=>`<option value="${k}"${k==sel?' selected':''}>${v[0]}</option>`).join('');
+const dil=(d,w,h)=>{const t=new Uint8ClampedArray(d);for(let y=0;y<h;y++)for(let x=0;x<w;x++)for(let k=0;k<3;k++){let m=0;for(let j=-1;j<2;j++)for(let i=-1;i<2;i++){const yy=y+j,xx=x+i;if(yy>=0&&yy<h&&xx>=0&&xx<w){const v=t[(yy*w+xx)*4+k];if(v>m)m=v}}d[(y*w+x)*4+k]=m}};
+function filt(c,name){const o=(FL[name]||[0,{}])[1];if(!Object.keys(o).length)return;const x=c.getContext('2d'),W=c.width,H=c.height,id=x.getImageData(0,0,W,H),a=id.data,n=W*H;
+ if(o.sh){const sw=Math.max(8,W/12|0),sh=Math.max(8,H/12|0),s=document.createElement('canvas');s.width=sw;s.height=sh;const sx=s.getContext('2d');sx.drawImage(c,0,0,sw,sh);const sd=sx.getImageData(0,0,sw,sh);dil(sd.data,sw,sh);dil(sd.data,sw,sh);sx.putImageData(sd,0,0);
+  const b=document.createElement('canvas');b.width=W;b.height=H;const bx=b.getContext('2d');bx.imageSmoothingQuality='high';bx.drawImage(s,0,0,W,H);const bd=bx.getImageData(0,0,W,H).data;
+  for(let i=0;i<a.length;i+=4)for(let k=0;k<3;k++)a[i+k]=a[i+k]*255/(bd[i+k]||1)} // pixel / background = shadow chole jay
+ if(o.g)for(let i=0;i<a.length;i+=4)a[i]=a[i+1]=a[i+2]=a[i]*.3+a[i+1]*.59+a[i+2]*.11;
+ if(o.st){const h=new Uint32Array(256);for(let i=0;i<a.length;i+=4)h[a[i]*.3+a[i+1]*.59+a[i+2]*.11|0]++;let lo=0,hi=255,s=0;while(lo<254&&(s+=h[lo])<n*.005)lo++;s=0;while(hi>lo+1&&(s+=h[hi])<n*.005)hi--;const m=255/(hi-lo);for(let i=0;i<a.length;i+=4)for(let k=0;k<3;k++)a[i+k]=(a[i+k]-lo)*m}
+ if(o.th)for(let i=0;i<a.length;i+=4){const v=a[i]<=100?0:a[i]>=185?255:(a[i]-100)*3;a[i]=a[i+1]=a[i+2]=v}
+ if(o.sp){const t=new Uint8ClampedArray(a),r=W*4;for(let y=1;y<H-1;y++)for(let q=1;q<W-1;q++){const p=(y*W+q)*4;for(let k=0;k<3;k++)a[p+k]=5*t[p+k]-t[p-4+k]-t[p+4+k]-t[p-r+k]-t[p+r+k]}}
+ x.putImageData(id,0,0)}
+
+// ---- Viewer (Open PDF): lazy render, jate boro PDF o fast khole
+function viewer(f,doc){sheet(f.name,b=>{b.innerHTML=`<div class="zb"><button class="ic" id="zo">−</button><b id="zl">100%</b><button class="ic" id="zi">+</button><button class="ic" id="sv">⬇</button></div><div class="pages"></div>`;
+ let z=1;const P=b.querySelector('.pages');
+ const ob=new IntersectionObserver(es=>es.forEach(async e=>{if(!e.isIntersecting)return;ob.unobserve(e.target);const d=e.target,p=await doc.getPage(+d.dataset.i),v=p.getViewport({scale:1}),vp=p.getViewport({scale:Math.min(4,d.clientWidth/v.width*devicePixelRatio)}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;d.style.aspectRatio=v.width+'/'+v.height;await p.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;d.append(c)}),{root:b,rootMargin:'800px'});
+ const draw=()=>{ob.disconnect();P.innerHTML='';P.style.width=z*100+'%';$('#zl').textContent=Math.round(z*100)+'%';for(let i=1;i<=doc.numPages;i++){const d=document.createElement('div');d.className='pg';d.dataset.i=i;P.append(d);ob.observe(d)}};
+ $('#zo').onclick=()=>{z=Math.max(.5,z-.25);draw()};$('#zi').onclick=()=>{z=Math.min(3,z+.25);draw()};$('#sv').onclick=()=>dl(f,f.name,f.type);draw()})}
+async function openFile(f,old){const e=ext(f.name);
+ if(e=='pdf'||f.type=='application/pdf')return go('Opening…',async()=>{const doc=await pdfjsDoc(f);if(!old)await addRec(f,doc.numPages+' pages');render();viewer(f,doc)});
+ if(f.type.startsWith('image/')){if(!old)await addRec(f,'image');render();return sheet(f.name,b=>b.innerHTML=`<img class="full" src="${URL.createObjectURL(f)}">`)}
+ const t=await f.text();if(!old)await addRec(f,t.split('\n').length+' lines');render();sheet(f.name,b=>b.innerHTML=`<pre class="txt">${esc(t.slice(0,2e5))}</pre>`)}
+
+// ---- Tool scaffolds
+const withPdf=(title,fn)=>sheet(title,b=>{b.innerHTML=`<div class="glass pad" id="pk"><p class="sub" style="margin:0">Select a PDF file</p><button class="btn" id="ch">Choose PDF</button></div><div id="wk" style="display:flex;flex-direction:column;gap:12px"></div>`;
+ $('#ch').onclick=async()=>{const[f]=await pick('application/pdf');if(!f)return;await go('Loading…',async()=>{const src=await PDFDocument.load(await buf(f),{ignoreEncryption:true});$('#pk').innerHTML=`<b>${esc(f.name)}</b><small>${src.getPageCount()} pages</small>`;await fn(f,src,$('#wk'))})}});
+const listTool=(title,accept,cam,opts,make,hook)=>sheet(title,b=>{let it=[];
+ b.innerHTML=`<div class="glass pad"><div class="row"><button class="btn o" id="ad">${cam?'📷 Take photo':'＋ Add files'}</button>${cam?'<button class="btn o" id="gl">🖼 Gallery</button>':''}</div>${opts}</div><div id="ls"></div><button class="btn g" id="mk" style="flex:none">Create PDF</button>`;
+ const rl=()=>$('#ls').innerHTML=it.map((f,k)=>`<div class="glass li" data-k="${k}">${/^image/.test(f.type)?`<img src="${URL.createObjectURL(f)}">`:'<span class="fi">PDF</span>'}<span class="nm"><b>${esc(f.name)}</b></span><button data-o="u">↑</button><button data-o="d">↓</button><button data-o="x">✕</button></div>`).join('')||'<p class="empty">Nothing added yet</p>';
+ const add=async c=>{it.push(...await pick(accept,1,c));rl();hook&&hook(it)};rl();b.addEventListener('change',()=>hook&&hook(it));
+ $('#ad').onclick=()=>add(cam);if(cam)$('#gl').onclick=()=>add(0);
+ $('#ls').onclick=e=>{const o=e.target.dataset.o,k=+e.target.closest('.li')?.dataset.k;if(!o)return;if(o=='x')it.splice(k,1);else{const j=o=='u'?k-1:k+1;if(j<0||j>=it.length)return;[it[k],it[j]]=[it[j],it[k]]}rl();hook&&hook(it)};
+ $('#mk').onclick=()=>go('Creating…',async()=>{if(!it.length)throw Error('Add files first');await make(it)})});
+const rangeTool=(title,hint,mode)=>withPdf(title,(f,src,w)=>{const n=src.getPageCount();
+ w.innerHTML=`<div class="glass pad"><label>${hint}</label><input id="r" placeholder="1-3, 5, 7-9"><button class="btn" id="a">${mode=='split'?'Split':'Extract'}</button>${mode=='split'?'<button class="btn o" id="ev">Every page separately</button>':''}</div>`;
+ const run=get=>go('Working…',async()=>{const rs=get(),parts=mode=='split'?rs:[rs.flat()],fl=[];
+  for(const[k,r]of parts.entries()){const o=await PDFDocument.create();(await o.copyPages(src,r)).forEach(p=>o.addPage(p));fl.push([`${base(f)}_${mode=='split'?'part'+(k+1):'extract'}.pdf`,await o.save()])}
+  fl.length==1?await out(fl[0][1],fl[0][0]):await zip(fl,base(f)+'_split.zip')});
+ $('#a').onclick=()=>run(()=>ranges($('#r').value,n));if($('#ev'))$('#ev').onclick=()=>run(()=>Array.from({length:n},(_,i)=>[i]))});
+const sizes={a4:[595,842],letter:[612,792]};
+const TOOLS={
+ merge:()=>listTool('Merge PDFs','application/pdf',0,'<p class="sub" style="margin:0">Order matters: first file = first pages.</p>',async it=>{const o=await PDFDocument.create();for(const f of it){const s=await PDFDocument.load(await buf(f),{ignoreEncryption:true});(await o.copyPages(s,s.getPageIndices())).forEach(p=>o.addPage(p))}await out(await o.save(),'Merged_'+stamp()+'.pdf')}),
+ split:()=>rangeTool('Split PDF','Each comma part becomes its own PDF','split'),
+ extract:()=>rangeTool('Extract Pages','Pages to pull into one new PDF','extract'),
+ organize:()=>withPdf('Organize',async(f,src,w)=>{const n=src.getPageCount(),th={};let pg=Array.from({length:n},(_,i)=>({i,r:0}));
+  const doc=await pdfjsDoc(f);w.innerHTML='<button class="btn" id="sv" style="flex:none">Save PDF</button><div class="grid" id="gr"></div>';
+  const draw=()=>{$('#gr').innerHTML=pg.map((p,k)=>`<div class="glass tc" data-k="${k}"><div class="tw"><canvas data-i="${p.i}" style="transform:rotate(${p.r}deg)"></canvas></div><small>Page ${p.i+1}</small><div class="tb"><button data-o="l">◀</button><button data-o="rl">↺</button><button data-o="rr">↻</button><button data-o="d">🗑</button><button data-o="r">▶</button></div></div>`).join('');
+   (async()=>{for(const c of $('#gr').querySelectorAll('canvas')){const i=+c.dataset.i;if(!th[i])th[i]=await thumb(doc,i+1,140);c.width=th[i].width;c.height=th[i].height;c.getContext('2d').drawImage(th[i],0,0)}})()};
+  $('#gr').onclick=e=>{const o=e.target.dataset.o,k=+e.target.closest('.tc')?.dataset.k;if(!o)return;const p=pg[k];
+   if(o=='rl')p.r=(p.r+270)%360;else if(o=='rr')p.r=(p.r+90)%360;else if(o=='d'){if(pg.length>1)pg.splice(k,1)}
+   else{const j=o=='l'?k-1:k+1;if(j<0||j>=pg.length)return;[pg[k],pg[j]]=[pg[j],pg[k]]}draw()};
+  $('#sv').onclick=()=>go('Saving…',async()=>{const o=await PDFDocument.create();for(const p of pg){const[c]=await o.copyPages(src,[p.i]);c.setRotation(degrees((c.getRotation().angle+p.r)%360));o.addPage(c)}await out(await o.save(),base(f)+'_organized.pdf')});draw()}),
+ img2pdf:()=>imgTool('Images to PDF',0),
+ scan:()=>imgTool('Scan',1),
+ pdf2img:()=>withPdf('PDF to Images',(f,src,w)=>{const n=src.getPageCount();
+  w.innerHTML=`<div class="glass pad"><label>Format</label><select id="fm"><option value="png">PNG</option><option value="jpg">JPG</option></select><label>Quality</label><select id="sc"><option value="1">Normal (1x)</option><option value="2">High (2x)</option><option value="3">Ultra (3x)</option><option value="4">Max (4x)</option></select><label>Pages (empty = all)</label><input id="r" placeholder="1-3, 5"><button class="btn" id="a">Export</button></div>`;
+  $('#fm').value=S.set.fmt;$('#sc').value=S.set.scale;
+  $('#a').onclick=()=>go('Exporting…',async()=>{const doc=await pdfjsDoc(f),idx=$('#r').value.trim()?ranges($('#r').value,n).flat():Array.from({length:n},(_,i)=>i),fm=$('#fm').value,fl=[];
+   for(const i of idx){busy(`Page ${i+1}…`);const p=await doc.getPage(i+1),vp=p.getViewport({scale:+$('#sc').value*1.34}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await p.render({canvasContext:c.getContext('2d'),viewport:vp,background:'#fff'}).promise;
+    fl.push([`${base(f)}_p${i+1}.${fm}`,await new Promise(r=>c.toBlob(r,fm=='png'?'image/png':'image/jpeg',.92))])}
+   fl.length==1?dl(fl[0][1],fl[0][0],fl[0][1].type):await zip(fl,base(f)+'_images.zip');toast('Exported '+fl.length+' image(s)')})}),
+ text:()=>withPdf('Extract Text',async(f,src,w)=>{const doc=await pdfjsDoc(f);let t='';
+  for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t+=`--- Page ${i} ---\n`+c.items.map(x=>x.str+(x.hasEOL?'\n':'')).join('')+'\n\n'}
+  w.innerHTML=`${/\w/.test(t.replace(/--- Page \d+ ---/g,''))?'':'<p class="sub">No selectable text found. This PDF may be a scan (OCR is not included).</p>'}<div class="row"><button class="btn" id="cp">Copy</button><button class="btn o" id="sx">Save .txt</button></div><textarea id="ta" rows="16"></textarea>`;
+  $('#ta').value=t;$('#cp').onclick=()=>{$('#ta').select();document.execCommand('copy');toast('Copied')};$('#sx').onclick=()=>dl($('#ta').value,base(f)+'.txt','text/plain')}),
+ create:()=>sheet('Create PDF',b=>{b.innerHTML=`<div class="glass pad"><label>Type</label><select id="m"><option value="b">Blank pages</option><option value="t">From text</option><option value="i">From images</option></select><label>Page size</label><select id="sz"><option value="a4">A4</option><option value="letter">Letter</option></select><div id="bl"><label>Number of pages</label><input id="np" type="number" value="1" min="1" max="200"></div><div id="tx" hidden><label>Text (Latin characters only)</label><textarea id="t" rows="10"></textarea><label>Font size</label><input id="fs" type="number" value="12"></div><button class="btn" id="mk" style="flex:none">Create PDF</button></div>`;
+  $('#m').onchange=e=>{if(e.target.value=='i')return TOOLS.img2pdf();$('#bl').hidden=e.target.value!='b';$('#tx').hidden=e.target.value!='t'};
+  $('#mk').onclick=()=>go('Creating…',async()=>{const[W,H]=sizes[$('#sz').value],o=await PDFDocument.create();
+   if($('#m').value=='b')for(let i=0;i<Math.min(200,+$('#np').value||1);i++)o.addPage([W,H]);
+   else{const ft=await o.embedFont(StandardFonts.Helvetica),s=+$('#fs').value||12,mg=50,lh=s*1.4;let p=o.addPage([W,H]),y=H-mg;
+    const put=l=>{if(y<mg){p=o.addPage([W,H]);y=H-mg}p.drawText(l,{x:mg,y:y-s,size:s,font:ft});y-=lh};
+    for(const ln of $('#t').value.replace(/\t/g,'    ').replace(/[^\n\x20-\x7e\xa0-\xff]/g,'?').split('\n')){let cur='';for(const wd of ln.split(' ')){const tt=cur?cur+' '+wd:wd;if(ft.widthOfTextAtSize(tt,s)>W-2*mg&&cur){put(cur);cur=wd}else cur=tt}put(cur)}}
+   await out(await o.save(),'Document_'+stamp()+'.pdf')})}),
+ enhance:()=>withPdf('Enhance PDF',(f,src,w)=>{w.innerHTML=`<div class="glass pad"><label>Filter</label><select id="ft">${flOpts('crisp')}</select><canvas id="pv" style="width:100%;border-radius:12px"></canvas><label>Resolution</label><select id="dp"><option value="2.1">Standard (150 dpi)</option><option value="3" selected>High (216 dpi)</option><option value="4.1">Max (300 dpi)</option></select><label>JPEG quality</label><select id="ql"><option value=".95">Best</option><option value=".85">Balanced</option><option value=".7">Small</option></select><button class="btn" id="a">Enhance &amp; save</button></div>`;
+  let doc;const pv=async()=>{doc=doc||await pdfjsDoc(f);const c=await thumb(doc,1,700);filt(c,$('#ft').value);const p=$('#pv');p.width=c.width;p.height=c.height;p.getContext('2d').drawImage(c,0,0)};w.onchange=pv;pv();
+  $('#a').onclick=()=>go('Enhancing…',async()=>{doc=doc||await pdfjsDoc(f);const o=await PDFDocument.create();
+   for(let i=1;i<=doc.numPages;i++){busy(`Page ${i}/${doc.numPages}…`);const p=await doc.getPage(i),v=p.getViewport({scale:1}),vp=p.getViewport({scale:Math.min(+$('#dp').value,4200/Math.max(v.width,v.height))}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await p.render({canvasContext:c.getContext('2d'),viewport:vp,background:'#fff'}).promise;filt(c,$('#ft').value);
+    const im=await o.embedJpg(await(await new Promise(r=>c.toBlob(r,'image/jpeg',+$('#ql').value))).arrayBuffer());o.addPage([v.width,v.height]).drawImage(im,{x:0,y:0,width:v.width,height:v.height})}
+   await out(await o.save(),base(f)+'_enhanced.pdf')})}),
+ pagenum:()=>withPdf('Page Numbers',(f,src,w)=>{w.innerHTML=`<div class="glass pad"><label>Position</label><select id="ps"><option value="c">Bottom center</option><option value="r">Bottom right</option><option value="l">Bottom left</option></select><label>Start at</label><input id="st" type="number" value="1"><button class="btn" id="a">Add numbers</button></div>`;
+  $('#a').onclick=()=>go('Working…',async()=>{const ft=await src.embedFont(StandardFonts.Helvetica);src.getPages().forEach((p,i)=>{const{width}=p.getSize(),t=''+((+$('#st').value||1)+i),tw=ft.widthOfTextAtSize(t,10),v=$('#ps').value;p.drawText(t,{x:v=='c'?(width-tw)/2:v=='r'?width-tw-30:30,y:20,size:10,font:ft})});await out(await src.save(),base(f)+'_numbered.pdf')})}),
+ watermark:()=>withPdf('Watermark',(f,src,w)=>{w.innerHTML=`<div class="glass pad"><label>Text (Latin characters)</label><input id="wt" value="CONFIDENTIAL"><label>Opacity (%)</label><input id="op" type="number" value="20"><button class="btn" id="a">Add watermark</button></div>`;
+  $('#a').onclick=()=>go('Working…',async()=>{const ft=await src.embedFont(StandardFonts.HelveticaBold),t=$('#wt').value.replace(/[^\x20-\x7e]/g,'?'),a=Math.PI/4;src.getPages().forEach(p=>{const{width:W,height:H}=p.getSize(),s=Math.min(W,H)/(t.length*.45||1)*1.1,tw=ft.widthOfTextAtSize(t,s);p.drawText(t,{x:W/2-tw/2*Math.cos(a)+s/3*Math.sin(a),y:H/2-tw/2*Math.sin(a)-s/3*Math.cos(a),size:s,font:ft,color:rgb(.5,.5,.5),opacity:(+$('#op').value||20)/100,rotate:degrees(45)})});await out(await src.save(),base(f)+'_watermark.pdf')})})
+};
+// Images -> PDF / Scan: filter + quality select, live preview
+function imgTool(title,cam){const pv=async it=>{const c=$('#pv');if(!c)return;if(!it.length){c.hidden=true;return}const t=await toCanvas(it[0],700);filt(t,$('#ft').value);c.width=t.width;c.height=t.height;c.getContext('2d').drawImage(t,0,0);c.hidden=false};
+ listTool(title,'image/*',cam,`<label>Filter</label><select id="ft">${flOpts(cam?'magic':'none')}</select><canvas id="pv" hidden style="width:100%;border-radius:12px"></canvas><label>Quality</label><select id="ql"><option value="4096,.98">Best (full resolution)</option><option value="3000,.92">High</option><option value="1800,.75">Small file</option></select><label>Page size</label><select id="ps"><option value="fit">Fit image</option><option value="a4">A4</option></select>`,async it=>{
+ const o=await PDFDocument.create(),a4=$('#ps').value=='a4',[mx,q]=$('#ql').value.split(',').map(Number),fn=$('#ft').value;
+ for(let k=0;k<it.length;k++){busy(`Image ${k+1}/${it.length}…`);const c=await toCanvas(it[k],mx);filt(c,fn);const im=await o.embedJpg(await(await new Promise(r=>c.toBlob(r,'image/jpeg',q))).arrayBuffer()),W=im.width,H=im.height;
+  if(a4){const s=Math.min(555/W,802/H),w=W*s,h=H*s;o.addPage([595,842]).drawImage(im,{x:(595-w)/2,y:(842-h)/2,width:w,height:h})}else o.addPage([595,595*H/W]).drawImage(im,{x:0,y:0,width:595,height:595*H/W})}
+ await out(await o.save(),(cam?'Scan_':'Images_')+stamp()+'.pdf')},pv)}
+
+// ---- Screens
+const T=[['ORGANIZE',[['merge','🔀','Merge PDFs','Combine files',5],['split','✂️','Split PDF','Extract pages',275],['organize','☰','Organize','Reorder & rotate',185],['extract','📤','Extract Pages','Pull pages into a new PDF',165]]],
+ ['CONVERT',[['img2pdf','🖼','Images to PDF','Photos to PDF',245],['pdf2img','🗂','PDF to Images','Export pages as JPG/PNG',200],['text','📝','Extract Text','Copy text',175],['create','➕','Create PDF','Blank, images, text',25]]],
+ ['MORE',[['enhance','✨','Enhance PDF','Clean scans, clear text',45],['pagenum','#️⃣','Page Numbers','Number every page',330],['watermark','💧','Watermark','Stamp text on pages',215]]]];
+const vHome=()=>{const r=rec.filter(x=>x.name.toLowerCase().includes(S.q)).sort([(a,b)=>b.t-a.t,(a,b)=>a.name.localeCompare(b.name),(a,b)=>a.ext.localeCompare(b.ext)][S.sort]);
+ return `<section class="glass hero"><div class="logo" style="background:none"><svg viewBox="0 0 80 80" width="60" height="60"><rect width="80" height="80" rx="18" fill="#ef5350"/><path d="M22 12H48L62 26V68H22Z" fill="#fff"/><path d="M48 12V26H62Z" fill="#ffd0cf"/><rect x="14" y="42" width="52" height="18" rx="4" fill="#b71c1c"/><text x="40" y="56" text-anchor="middle" font-size="14" font-weight="700" font-family="system-ui,sans-serif" fill="#fff">PDF</text></svg></div><span class="chip">🔒 ON-DEVICE</span><h1>PDF work, simply elegant.</h1><p>Open, scan, and organize your files — privately on your device.</p><div class="row"><button class="btn" data-a="open">Open PDF</button><button class="btn g" data-a="scan">Scan</button></div></section>
+ <section class="glass rc"><div class="rh"><b>Recents</b><button class="ic" data-a="sort">☰</button><i></i><button class="ic red" data-a="clr">✕</button></div>${r.map(x=>`<button class="item" data-a="rec" data-id="${x.id}"><span class="fi ${x.ext}">${esc(x.ext.toUpperCase().slice(0,4))}</span><span class="nm"><b>${esc(x.name)}</b><small>${ago(x.t)} · ${x.info}</small></span></button>`).join('')||'<p class="empty">No recent files yet. Open or create a PDF.</p>'}</section>`};
+const vTools=()=>`<button class="open" data-a="open"><span class="fi" style="background:rgba(47,140,255,.25);color:var(--ac)">📄</span><span class="nm"><b style="font-size:18px">Open PDF</b><small>View and read</small></span></button>`+T.map(([h,l])=>{l=l.filter(t=>t[2].toLowerCase().includes(S.q));return l.length?`<div class="sec">${h}</div><div class="glass tg">${l.map(t=>`<button class="card" data-a="tool" data-id="${t[0]}" style="background:hsl(${t[4]} 80% 60% / .2)"><span>${t[1]}</span><b>${t[2]}</b><small>${t[3]}</small></button>`).join('')}</div>`:''}).join('');
+const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-a="set" data-k="${k}" data-v="${v}" class="${S.set[k]==v?'on':''}">${l}</button>`).join('')}</div>`;
+const vSet=()=>`<div class="glass pad"><label>Theme</label>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']])}<label>Default image format</label>${seg('fmt',[['png','PNG'],['jpg','JPG']])}<label>Default export quality</label>${seg('scale',[[1,'1x'],[2,'2x'],[3,'3x'],[4,'4x']])}</div><div class="glass pad"><button class="btn o" data-a="clr" style="flex:none">Clear recent files</button><p class="sub" style="margin:0">Everything runs on your device. Your files never leave it.</p><p class="sub" style="margin:0;text-align:center"><b>Developed by RaHaT</b></p></div>`;
+function render(){$('#ttl').textContent={home:'ClearPDF',tools:'Tools',set:'Settings'}[S.tab];document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));$('#main').innerHTML={home:vHome,tools:vTools,set:vSet}[S.tab]()}
+$('#main').onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,d=b.dataset;
+ if(a=='open'){const[f]=await pick('application/pdf,image/*,text/*,.txt,.csv,.json,.md');f&&openFile(f)}
+ else if(a=='scan')TOOLS.scan();else if(a=='tool')TOOLS[d.id]();
+ else if(a=='rec'){const r=rec.find(x=>x.id==d.id),f=await idb('get',r.id);f?openFile(f,1):toast('File is no longer available')}
+ else if(a=='sort'){S.sort=(S.sort+1)%3;toast('Sorted by '+['newest','name','type'][S.sort]);render()}
+ else if(a=='clr'){if(confirm('Clear all recent files?')){rec=[];sv('rec',rec);idb('clear');render()}}
+ else if(a=='set'){S.set[d.k]=d.k=='scale'?+d.v:d.v;sv('set',S.set);theme();render()}};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.q='';$('#q').value='';render()});
+$('#sbtn').onclick=()=>{const s=$('#sw');s.hidden=!s.hidden;if(!s.hidden)$('#q').focus();else{S.q='';$('#q').value='';render()}};
+$('#q').oninput=e=>{S.q=e.target.value.toLowerCase();render()};
+if(NATIVE){const A=CAP.Plugins.App;A.addListener('backButton',()=>{if($('#ov').style.display=='flex')close();else if(S.tab!='home'){S.tab='home';render()}else A.exitApp()})}
+matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',theme);theme();render();
+</script></body></html>
